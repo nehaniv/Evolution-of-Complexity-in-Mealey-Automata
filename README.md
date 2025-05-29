@@ -12,16 +12,17 @@ All logic and functionality are contained in a single Python file:
 A bash script is provided for running the system with customizable parameters:
 - `run_es_fogel.sh`
 
-## 🔧 Environment Setup
+##  Environment Setup
 
 We recommend using a Python virtual environment to manage dependencies cleanly.
 
-### ✅ Prerequisites
+### Prerequisites
 - Python 3.10 or newer (tested with Python 3.13)
 - [GAP](https://www.gap-system.org/) (for algebraic decomposition of automata)
+- `graphviz' (for visualization of automata) 
 - `pdflatex` (for LaTeX report generation)
 
-### 🧪 Quick Setup Using `venv`
+### Quick Setup Using `venv`
 
 ```bash
 # Create and activate virtual environment
@@ -32,17 +33,9 @@ source automata-env/bin/activate  # or 'automata-env\Scripts\activate' on Window
 pip install -r requirements.txt
 
 
-## Setup Instructions
 
-### Option 1: pip + venv
+#**## Option 2: Conda**
 
-```bash
-python3 -m venv automata-env
-source automata-env/bin/activate
-pip install -r requirements.txt
-
-
-### Option 2: Conda
 
 conda env create -f environment.yml
 conda activate automata-env
