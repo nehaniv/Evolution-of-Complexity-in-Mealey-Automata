@@ -1,6 +1,6 @@
 # Evolution-of-Complexity-in-Mealey-Automata
 
-# Mealy Automata Evolution Framework
+## Mealy Automata Evolution Framework
 
 This project implements an **evolutionary strategy (ES)** for evolving **Mealy automata** to solve predictive tasks such as:
 - Traversal of deterministic environments (e.g., "SimpleHardestEnvironment")
@@ -32,14 +32,16 @@ source automata-env/bin/activate  # or 'automata-env\Scripts\activate' on Window
 # Install dependencies
 pip install -r requirements.txt
 
+```
 
 
-#**## Option 2: Conda**
+### Quick Setup Using Conda
 
 
+```
 conda env create -f environment.yml
 conda activate automata-env
-
+```
 
 
 ###  Running the Evolution
@@ -48,19 +50,10 @@ bash MealeyEvolutionStrategy.sh
 
 You can modify MealeyEvolutionStrategy.sh to adjust:
 
-Population size
+Population size, Number of states, Number of offspring, Number of generations, Number of runs, Fitness function (and possibly Environment variant), Initialization method (e.g. self-looped, random, from file)
 
-Number of states
 
-Number of offspring
-
-Fitness function
-
-Initialization method (e.g. self-looped, random, from file)
-
-Environment variant
-
-All results are timestamped and saved:
+A number of results are timestamped and saved:
 
 LaTeX reports (.tex, compiled to .pdf)
 
