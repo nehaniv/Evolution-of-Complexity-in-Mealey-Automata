@@ -10,7 +10,7 @@ All logic and functionality are contained in a single Python file:
 - `ES-Automata-Fogel.py`
 
 A bash script is provided for running the system with customizable parameters:
-- `run_es_fogel.sh`
+- `MealyEvolutionStrategy.sh`
 
 ##  Environment Setup
 
