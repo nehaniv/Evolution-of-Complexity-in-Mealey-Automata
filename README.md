@@ -17,7 +17,7 @@ All logic and functionality are contained in a single Python file:
 A bash script is provided for running the system with customizable parameters:
 - `MealeyEvolutionStrategy.sh`
 
-##  Environment Setup
+##  Python Environment Setup
 
 We recommend using a Python virtual environment to manage dependencies cleanly.
 
@@ -49,7 +49,7 @@ conda activate automata-env
 ```
 
 
-###  Running the Evolution
+##  Running the Evolution and Complexity Analysis
 bash MealeyEvolutionStrategy.sh
 
 
@@ -60,7 +60,7 @@ Population size, Number of states, Number of offspring, Number of generations, N
 
 A number of results are timestamped and saved:
 
-LaTeX reports (.tex, compiled to .pdf)
+LaTeX reports (.tex, compiled to .pdf)  - note there is a preliminary evolution report produce that does not rely on the complexity analysis. 
 
 GAP scripts and outputs (.g, .txt)
 
