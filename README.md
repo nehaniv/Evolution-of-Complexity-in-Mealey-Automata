@@ -60,7 +60,7 @@ Population size, Number of states, Number of offspring, Number of generations, N
 
 A number of results are timestamped and saved:
 
-LaTeX reports (.tex, compiled to .pdf)  - note there is a preliminary evolution report produce that does not rely on the complexity analysis. 
+LaTeX reports (.tex, compiled to .pdf)  - note there is a preliminary evolution report produced that does not rely on the complexity analysis. 
 
 GAP scripts and outputs (.g, .txt)
 
