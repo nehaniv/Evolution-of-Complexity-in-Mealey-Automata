@@ -23,8 +23,8 @@ We recommend using a Python virtual environment to manage dependencies cleanly.
 
 ### Prerequisites
 - Python 3.10 or newer (tested with Python 3.13)
-- [GAP](https://www.gap-system.org/) with package SgpDec (https://github.com/gap-packages/sgpdec) (for algebraic decomposition and complexity analysis of automata)
-- `graphviz' (for visualization of automata) 
+- [GAP](https://www.gap-system.org/) with package [SgpDec](https://github.com/gap-packages/sgpdec) (for algebraic decomposition and complexity analysis of automata)
+- `graphviz` (for visualization of automata) 
 - `pdflatex` (for LaTeX report generation)
 
 #### Quick Setup Using `venv`
