@@ -6,6 +6,11 @@ This project implements an **evolutionary strategy (ES)** for evolving **Mealy a
 - Traversal of deterministic environments (e.g., "SimpleHardestEnvironment")
 - Pattern prediction (e.g., EightBall, FogelPalindrome)
 
+## Complexity Analysis using Krohn-Rhodes Algebraic Automata Theory
+- Complexity Upper Bound computed using the holonomy decomposition method
+- Complexity Lower Bound computed by finding a longest chain of essential dependencies
+- Note: The number of reachable states minus 1 is a sharp upper bound too
+
 All logic and functionality are contained in a single Python file:
 - `ES-Automata-Fogel.py`
 
@@ -18,11 +23,11 @@ We recommend using a Python virtual environment to manage dependencies cleanly.
 
 ### Prerequisites
 - Python 3.10 or newer (tested with Python 3.13)
-- [GAP](https://www.gap-system.org/) (for algebraic decomposition of automata)
+- [GAP](https://www.gap-system.org/) with package SgpDec (https://github.com/gap-packages/sgpdec) (for algebraic decomposition and complexity analysis of automata)
 - `graphviz' (for visualization of automata) 
 - `pdflatex` (for LaTeX report generation)
 
-### Quick Setup Using `venv`
+#### Quick Setup Using `venv`
 
 ```bash
 # Create and activate virtual environment
@@ -35,7 +40,7 @@ pip install -r requirements.txt
 ```
 
 
-### Quick Setup Using Conda
+#### Quick Setup Using Conda
 
 
 ```
