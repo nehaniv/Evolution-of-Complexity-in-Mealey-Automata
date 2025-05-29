@@ -1,6 +1,6 @@
 # Evolution-of-Complexity-in-Mealey-Automata
 
-## Mealy Automata Evolution Framework
+## Mealey Automata Evolution Framework
 
 This project implements an **evolutionary strategy (ES)** for evolving **Mealy automata** to solve predictive tasks such as:
 - Traversal of deterministic environments (e.g., "SimpleHardestEnvironment")
