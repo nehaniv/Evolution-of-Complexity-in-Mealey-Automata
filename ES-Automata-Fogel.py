@@ -196,8 +196,6 @@ def eightball_fitness(automaton, target):
     penalty = len(automaton.get_reachable_states())
     return match - penalty, pairs
 
-
-
 def fogel_palindrome_fitness(automaton, target):
     raw_pairs = automaton.predict_stepwise(target[:-1])  # feed up to second-last
     seen = set()
@@ -214,7 +212,6 @@ def fogel_palindrome_fitness(automaton, target):
 
     penalty = len(automaton.get_reachable_states())
     return match - penalty, pairs
-
 
 def traversal_fitness(automaton, env_dfa):
     visited = set()
@@ -241,12 +238,48 @@ def traversal_fitness(automaton, env_dfa):
 
     return len(visited) - penalty, pairs
 
-
+def multitraversal_fitness(automaton, env_dfa):
+    total_fitness = 0
+    all_pairs = []
+    per_start_results = []
+    for start in range(env_dfa.num_states):
+        visited = set()
+        env_state = start
+        mealey_state = automaton.initial_state
+        pairs = []
+        seen_pairs = set()
+        for _ in range(100):
+            env_input = str(env_state + 1)
+            if env_input not in automaton.input_alphabet:
+                continue
+            mealey_output = automaton.outputs.get((mealey_state, env_input))
+            mealey_state = automaton.transitions.get((mealey_state, env_input), mealey_state)
+            if mealey_output in env_dfa.input_alphabet:
+                visited.add((env_state, mealey_output))
+                env_state = env_dfa.transitions.get((env_state, mealey_output), env_state)
+            pair = (env_input, mealey_output)
+            first_time = pair not in seen_pairs
+            if first_time:
+                seen_pairs.add(pair)
+            pairs.append((pair, first_time))
+        fitness = len(visited)
+        total_fitness += fitness
+        result = {
+            "start_state": start,
+            "run_fitness": fitness,
+            "pairs": pairs
+        }
+        if start == env_dfa.num_states - 1:
+            result["fitness"] = total_fitness
+        per_start_results.append(result)
+        all_pairs.extend(pairs)
+    return total_fitness, {"per_start": per_start_results, "all_pairs": all_pairs, "total_fitness": total_fitness}
 
 FITNESS_FUNCTIONS = {
     "EightBall": eightball_fitness,
     "FogelPalindrome": fogel_palindrome_fitness,
     "Traversal": traversal_fitness,
+    "MultiTraversal": multitraversal_fitness,
 }
 
 
@@ -254,49 +287,29 @@ FITNESS_FUNCTIONS = {
 
 # Part 3: Evolution Strategy, Plotting, GAP Saving, LaTeX Report, Main
 # ----------------- Evolution Strategy -----------------
-#def evolution_strategy(population, runs, generations, offspring_size,
-#                       fitness_name, env_variant, timestamp):
-#    if fitness_name == "EightBall":
-#        input_seq = ('00011000' * 12)[:84]
-#    elif fitness_name == "FogelPalindrome":
-#        input_seq = ('101110011101' * 10)
-#    else:
-#        input_seq = ""
-#    # Input alphabet for traversal: 1 to 8
-##    input_alphabet = ['0', '1'] if fitness_name != "Traversal" else [str(i) for i in range(1, 9)]
-#        input_alphabet = [str(i) for i in range(1, 9)]
-#    output_alphabet = ['0', '1']
-#
-#    env_dfa = EnvironmentDFA(8, ['0', '1'], variant=env_variant) if fitness_name == "Traversal" else None
-#    fitness_fn = (lambda a: traversal_fitness(a, env_dfa)) if fitness_name == "Traversal" else \
-#                 (lambda a: FITNESS_FUNCTIONS[fitness_name](a, input_seq))
 def evolution_strategy(population, runs, generations, offspring_size,
                        fitness_name, env_variant, timestamp):
 
     # Set input sequence and input alphabet depending on fitness
     if fitness_name == "EightBall":
         input_seq = ('00011000' * 12)[:84]
-    #    input_alphabet = ['0', '1']
     elif fitness_name == "FogelPalindrome":
         input_seq = ('101110011101' * 10)
-    #    input_alphabet = ['0', '1']
-    elif fitness_name == "Traversal":
+    elif fitness_name in ["Traversal", "MultiTraversal"]:
         input_seq = ""  # Traversal doesn't use a fixed sequence
-    #    input_alphabet = [str(i) for i in range(1, 9)]  # '1' to '8'
     else:
         raise ValueError(f"Unknown fitness function: {fitness_name}")
 
-    #output_alphabet = ['0', '1']
-
-    # Environment DFA is only needed for Traversal
-    env_dfa = EnvironmentDFA(8, ['0', '1'], variant=env_variant) if fitness_name == "Traversal" else None
+    # Environment DFA is only needed for Traversal and MultiTraversal
+    env_dfa = EnvironmentDFA(8, ['0', '1'], variant=env_variant) if fitness_name in ["Traversal", "MultiTraversal"] else None
 
     # Fitness function setup
     if fitness_name == "Traversal":
         fitness_fn = lambda a: traversal_fitness(a, env_dfa)
+    elif fitness_name == "MultiTraversal":
+        fitness_fn = lambda a: multitraversal_fitness(a, env_dfa)
     else:
         fitness_fn = lambda a: FITNESS_FUNCTIONS[fitness_name](a, input_seq)
-
 
     all_run_data = []
     best_per_run = []
@@ -466,7 +479,7 @@ def create_prelim_report(fitness_name, env_variant, timestamp, best_per_run, par
         f.write("\\usepackage{listings}\n")
         f.write("\\geometry{margin=1in}\n\\begin{document}\n")
         f.write(f"\\title{{Evolution Strategy for Mealey Automata -- Fitness {fitness_name}")
-        if fitness_name == "Traversal":
+        if fitness_name in ["Traversal", "MultiTraversal"]:
             f.write(f" (Environment DFA: {env_variant})")
         f.write("}\n\\maketitle\n")
         f.write("\\section*{Evolution Metrics and Parameters}\n")
@@ -494,52 +507,9 @@ def create_prelim_report(fitness_name, env_variant, timestamp, best_per_run, par
         f.write(" }\n")
         f.write("\\end{figure}\n ")
 
-
-
         f.write("\\newpage\n")
 
-
-#        # Per-Run plot
-#        f.write("\\section*{Per Run Complexity Bounds Plots}\n")
-#        f.write("\\begin{figure}[h!]\n\\centering\n")
-#        f.write(f"\\includegraphics[width=0.8\\linewidth]{{gap_per_run_summary_{timestamp}.pdf}}\n")
-#            
-#        # Prepare caption info
-#        caption_fitness = f"Fitness function:{fitness_name}"
-#        if fitness_name == "Traversal":
-#            caption_fitness += f" (Environment DFA:{env_variant})"
-#    
-#        # Determine initialization method for clarity
-#        if params.get('init_automaton_file'):
-#            init_method = f"Initialized from automaton file: {params['init_automaton_file']}"
-#        elif params.get('init_population_file'):
-#            init_method = f"Initialized from population file: {params['init_population_file']}"
-#        elif params.get('checkpoint_file'):
-#            init_method = f"Resumed from checkpoint: {params['checkpoint_file']}"
-#        else:
-#            init_method = f"Initialized with self_loop_init = {params.get('self_loop_init', 'False')}"
-#        init_method = init_method.replace('_', '\\_')
-#
-#        # Full caption
-#        caption_text = (
-#            f"Per-run summary: number of reachable states (blue), complexity upper bound (green), and max chain length (red), and maximum possible complexity (purple dashed, equals reachable states minus 1) plotted against run number."
-#            f" {caption_fitness}. "
-#            f"{init_method}. "
-#            f"Parameters: population size = {params['population_size']}, "
-#            f"offspring  = {params['offspring_size']}, "
-#            f"num states = {params['num_states']}, runs = {params['runs']}, "
-#            f"generations = {params['generations']}. "
-#            )
-#
-#        f.write(f"\\caption{{{caption_text}}}\n")
-#        f.write("\\end{figure}\n")
-#        f.write("\\FloatBarrier\n")
-#
-#        f.write("\\newpage\n")
-
-  
         # Print Results of Each Run:
- 
         for i, (automaton, fitness, pairs, _) in enumerate(best_per_run):
             run_id = i + 1
             run_dot_pdf = f"best_automaton_run_{run_id}_{timestamp}.pdf"
@@ -552,28 +522,45 @@ def create_prelim_report(fitness_name, env_variant, timestamp, best_per_run, par
             f.write("\\newpage\n\\footnotesize\n")
             f.write(f"\\section*{{Run {run_id}}} \n")
             f.write(f"Fitness: {fitness_name} ")
-            if fitness_name == "Traversal":
+            if fitness_name in ["Traversal", "MultiTraversal"]:
                 f.write(f" (Environment DFA: {env_variant})\\\\ \n")
             if fitness_name == "Traversal": 
-                f.write(f"Raw Fitness: {fitness+.1*reachable_states}, Fitness: {fitness},\\\\ Reachable States: {reachable_states}, \n")
+                f.write(f"Raw Fitness: {fitness+.1*reachable_states}, Fitness: {fitness},\\ Reachable States: {reachable_states}, \n")
+            elif fitness_name == "MultiTraversal":
+                total_fitness = pairs["total_fitness"]
+                f.write(f"Total Fitness: {total_fitness}, Fitness: {fitness},\\ Reachable States: {reachable_states}, \n")
             else: 
-                f.write(f"Raw Fitness: {fitness+reachable_states}, Fitness: {fitness},\\\\ Reachable States: {reachable_states}, \n")
+                f.write(f"Raw Fitness: {fitness+reachable_states}, Fitness: {fitness},\\ Reachable States: {reachable_states}, \n")
 
-
-            f.write("\n\\noindent{\\bf Trajectory (Input, Output) Pairs}\n")
-            traj_str = ""
-            seen_pairs = set()
-            for (inp, out), first_time in pairs:
-                pair_str = f"({inp}, {out})"
-                if first_time:
-                    pair_str = f"\\underline{{\\textcolor{{red}}{{{pair_str}}}}}"
-                traj_str += pair_str + " "
-            f.write(traj_str + "\n")
-            out_str = ""
-            for (inp, out), first_time in pairs:
-                out_str += out
-            f.write("\n\\noindent Output: " + out_str + "\n")
-
+            if fitness_name == "MultiTraversal":
+                for result in pairs["per_start"]:
+                    f.write(f"\\newline\\noindent{{\\bf Start at Environment State {result['start_state']+1}}} ")
+                    f.write(f"\\newline Run Fitness: {result['run_fitness']} ")
+                    traj_str = ""
+                    for (inp, out), first_time in result['pairs']:
+                        pair_str = f"({inp}, {out})"
+                        if first_time:
+                            pair_str = f"\\underline{{\\textcolor{{red}}{{{pair_str}}}}}"
+                        traj_str += pair_str + " "
+                    f.write("\\newline Trajectory: " + traj_str + "\n")
+                    out_str = ""
+                    for (inp, out), first_time in result['pairs']:
+                        out_str += str(out)
+                    f.write("\\newline Output: " + out_str + "\n")
+            else:
+                f.write("\n\\noindent{\\bf Trajectory (Input, Output) Pairs}\n")
+                traj_str = ""
+                seen_pairs = set()
+                for (inp, out), first_time in pairs:
+                    pair_str = f"({inp}, {out})"
+                    if first_time:
+                        pair_str = f"\\underline{{\\textcolor{{red}}{{{pair_str}}}}}"
+                    traj_str += pair_str + " "
+                f.write(traj_str + "\n")
+                out_str = ""
+                for (inp, out), first_time in pairs:
+                    out_str += str(out)
+                f.write("\n\\noindent Output: " + out_str + "\n")
 
             f.write("\\begin{figure}[h!]\n\\centering\n")
             f.write(f"\\includegraphics[width=0.45\\linewidth]{{{run_dot_pdf}}}\n")
@@ -581,11 +568,7 @@ def create_prelim_report(fitness_name, env_variant, timestamp, best_per_run, par
             f.write("\\end{figure}\n")
             f.write("\\FloatBarrier\n")
 
-# Suppress Printing Code for Full Automaton with Unreachable States
-#
-#            f.write("\n{\\bf GAP Transformations (All States)}\n")
-#            f.write(f"\\lstinputlisting{{{run_g_file}}}\n")
- 
+            # Suppress Printing Code for Full Automaton with Unreachable States
             f.write("\n{\\bf GAP Transformations (Reachable States)}\n")
             f.write(f"\\lstinputlisting{{{run_g_reach_file}}}\n")
 
@@ -674,7 +657,7 @@ def create_report(fitness_name, env_variant, timestamp, best_per_run, parsed_res
             f" {caption_fitness}. "
             f"{init_method}. "
             f"Parameters: population size = {params['population_size']}, "
-            f"offspring  = {params['offspring_size']}, "
+            f"offspring size = {params['offspring_size']}, "
             f"num states = {params['num_states']}, runs = {params['runs']}, "
             f"generations = {params['generations']}. "
             )
@@ -1108,8 +1091,9 @@ if __name__ == "__main__":
     parser.add_argument('--num_states', type=int, default=10)
     parser.add_argument('--runs', type=int, default=10)
     parser.add_argument('--generations', type=int, default=100)
-    parser.add_argument('--fitness', choices=["EightBall", "FogelPalindrome", "Traversal"], default="EightBall")
-    parser.add_argument("--env_variant", type=str, default="SimpleHardestEnvironment", help="Variant of EnvironmentDFA for Traversal fitness")
+    parser.add_argument('--fitness', choices=["EightBall", "FogelPalindrome", "Traversal", "MultiTraversal"], default="EightBall",
+                        help="Fitness function: EightBall, FogelPalindrome, Traversal, MultiTraversal")
+    parser.add_argument("--env_variant", type=str, default="SimpleHardestEnvironment", help="Variant of EnvironmentDFA for Traversal/MultiTraversal fitness")
     parser.add_argument('--self_loop_init', type=str2bool, default=False, help="Initialize automata with self-looping transitions")
     parser.add_argument('--stamp', type=str, default=datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
 
@@ -1133,7 +1117,7 @@ if __name__ == "__main__":
         env_dfa = EnvironmentDFA(8, ['0', '1'], variant=args.env_variant)
 
     # Initialize input/output alphabets
-    if args.fitness == "Traversal":
+    if args.fitness in ["Traversal", "MultiTraversal"]:
         input_alphabet = [str(i) for i in range(1, 9)]
     else:
         input_alphabet = DEFAULT_INPUT_ALPHABET
