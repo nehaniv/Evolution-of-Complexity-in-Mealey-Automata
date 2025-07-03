@@ -263,17 +263,19 @@ def multitraversal_fitness(automaton, env_dfa):
                 seen_pairs.add(pair)
             pairs.append((pair, first_time))
         fitness = len(visited)
-        total_fitness += fitness
+        total_fitness += fitness 
         result = {
             "start_state": start,
             "run_fitness": fitness,
             "pairs": pairs
         }
         if start == env_dfa.num_states - 1:
-            result["fitness"] = total_fitness
+            penalty = 0.8 * len(automaton.get_reachable_states())
+            result["fitness"] = total_fitness - penalty
+            total_fitness = result["fitness"]
         per_start_results.append(result)
         all_pairs.extend(pairs)
-    return total_fitness, {"per_start": per_start_results, "all_pairs": all_pairs, "total_fitness": total_fitness}
+    return total_fitness, {"per_start": per_start_results, "all_pairs": all_pairs, "total_fitness": total_fitness, "penalty": penalty}
 
 FITNESS_FUNCTIONS = {
     "EightBall": eightball_fitness,
@@ -586,7 +588,7 @@ def create_report(fitness_name, env_variant, timestamp, best_per_run, parsed_res
         f.write("\\usepackage{listings}\n")
         f.write("\\geometry{margin=1in}\n\\begin{document}\n")
         f.write(f"\\title{{Evolution Strategy for Mealey Automata -- Fitness {fitness_name}")
-        if fitness_name == "Traversal":
+        if fitness_name in ["Traversal", "MultiTraversal"]:
             f.write(f" (Environment DFA: {env_variant})")
         f.write("}\n\\maketitle\n")
         f.write("\\section*{Evolution Metrics and Parameters}\n")
@@ -615,18 +617,6 @@ def create_report(fitness_name, env_variant, timestamp, best_per_run, parsed_res
         f.write("\\end{figure}\n ")
 
 
-#        # Per-Run  plot XX
-#        f.write("{\\newpage\n \\noindent \\bf Complexity Bounds by Run Plot}\n")
-#        f.write(f"Fitness: {fitness_name}")
-#        if fitness_name == "Traversal":
-#            f.write(f" (Environment DFA: {env_variant})")
-#        f.write("\\begin{figure}[h!]\n\\centering\n")
-#        f.write(f"\\includegraphics[width=0.8\\linewidth]{{gap_per_run_summary_{timestamp}.pdf}}\n")
-#        f.write("\\caption{Per-run summary: number of reachable states (blue), complexity upper bound (green), and max chain length (red) plotted against the run number.}\n")
-#        f.write("\\end{figure}\n")
-#        f.write("\\FloatBarrier\n")
-
-
         f.write("\\newpage\n")
 
 
@@ -634,13 +624,11 @@ def create_report(fitness_name, env_variant, timestamp, best_per_run, parsed_res
         f.write("\\section*{Per Run Complexity Bounds Plots}\n")
         f.write("\\begin{figure}[h!]\n\\centering\n")
         f.write(f"\\includegraphics[width=0.8\\linewidth]{{gap_per_run_summary_{timestamp}.pdf}}\n")
-            
+        
         # Prepare caption info
         caption_fitness = f"Fitness function:{fitness_name}"
         if fitness_name == "Traversal":
             caption_fitness += f" (Environment DFA:{env_variant})"
-    
-        # Determine initialization method for clarity
         if params.get('init_automaton_file'):
             init_method = f"Initialized from automaton file: {params['init_automaton_file']}"
         elif params.get('init_population_file'):
@@ -650,8 +638,6 @@ def create_report(fitness_name, env_variant, timestamp, best_per_run, parsed_res
         else:
             init_method = f"Initialized with self_loop_init = {params.get('self_loop_init', 'False')}"
         init_method = init_method.replace('_', '\\_')
-
-        # Full caption
         caption_text = (
             f"Per-run summary: number of reachable states (blue), complexity upper bound (green), and max chain length (red), and maximum possible complexity (purple dashed, equals reachable states minus 1) plotted against run number."
             f" {caption_fitness}. "
@@ -660,69 +646,65 @@ def create_report(fitness_name, env_variant, timestamp, best_per_run, parsed_res
             f"offspring size = {params['offspring_size']}, "
             f"num states = {params['num_states']}, runs = {params['runs']}, "
             f"generations = {params['generations']}. "
-            )
-
+        )
         f.write(f"\\caption{{{caption_text}}}\n")
         f.write("\\end{figure}\n")
         f.write("\\FloatBarrier\n")
 
         f.write("\\newpage\n")
 
-  
         # Print Results of Each Run:
- 
-        for j, (automaton, fitness, pairs, _) in enumerate(best_per_run):
-            run_id = j + 1
+        for i, (automaton, fitness, pairs, _) in enumerate(best_per_run):
+            run_id = i + 1
             run_dot_pdf = f"best_automaton_run_{run_id}_{timestamp}.pdf"
             run_dot_reach_pdf = f"best_automaton_run_{run_id}_{timestamp}_reachable.pdf"
             run_g_file = f"best_automaton_run_{run_id}_{timestamp}.g"
             run_g_reach_file = f"best_automaton_run_{run_id}_{timestamp}_reachable.g"
-        
-            
-            # Add GAP data
-            gap_data = parsed_results[j]
-            complexity_upper = gap_data['complexity_upper']
-            chain_length = gap_data['chain_length']
-            chain_text = gap_data['chain_text']
-            holonomy_text = gap_data['holonomy_text']
-            aperiodic = 'Yes' if gap_data['is_aperiodic'] else 'No'
-            reachable_states = gap_data['reachable_states']
+
+            reachable_states = len(automaton.get_reachable_states())
 
             f.write("\\newpage\n\\footnotesize\n")
             f.write(f"\\section*{{Run {run_id}}} \n")
             f.write(f"Fitness: {fitness_name} ")
-            if fitness_name == "Traversal":
+            if fitness_name in ["Traversal", "MultiTraversal"]:
                 f.write(f" (Environment DFA: {env_variant})\\\\ \n")
             if fitness_name == "Traversal": 
-                f.write(f"Raw Fitness: {fitness+.1*reachable_states}, Fitness: {fitness},\\\\ Reachable States: {reachable_states}, \n")
+                f.write(f"Raw Fitness: {fitness+.1*reachable_states}, Fitness: {fitness},\\ Reachable States: {reachable_states}, \n")
+            elif fitness_name == "MultiTraversal":
+                total_fitness = pairs["total_fitness"]
+                f.write(f"Total Fitness: {total_fitness}, Fitness: {fitness},\\ Reachable States: {reachable_states}, \n")
             else: 
-                f.write(f"Raw Fitness: {fitness+reachable_states}, Fitness: {fitness},\\\\ Reachable States: {reachable_states}, \n")
-            f.write(f"Complexity Upper Bound: {complexity_upper}, Essential Chain Lower Bound: {chain_length}, Aperiodic: {aperiodic}\\\\ \n")
-            if holonomy_text:
-                f.write("{\\bf Holonomy Decomposition: } ")
-                f.write(holonomy_text + "\\\\ \n")
+                f.write(f"Raw Fitness: {fitness+reachable_states}, Fitness: {fitness},\\ Reachable States: {reachable_states}, \n")
 
-            #  Print the chain text as a LaTeX listing
-            if chain_text:
-                f.write("{\\bf Max Chain of Essential Dependencies}\n")
-                f.write("\\begin{verbatim}\n")
-                f.write(chain_text + "\n")
-                f.write("\\end{verbatim}\n")
-
-            f.write("\n\\noindent{\\bf Trajectory (Input, Output) Pairs}\n")
-            traj_str = ""
-            seen_pairs = set()
-            for (inp, out), first_time in pairs:
-                pair_str = f"({inp}, {out})"
-                if first_time:
-                    pair_str = f"\\underline{{\\textcolor{{red}}{{{pair_str}}}}}"
-                traj_str += pair_str + " "
-            f.write(traj_str + "\n")
-            out_str = ""
-            for (inp, out), first_time in pairs:
-                out_str += out
-            f.write("\n\\noindent Output: " + out_str + "\n")
-
+            if fitness_name == "MultiTraversal":
+                for result in pairs["per_start"]:
+                    f.write(f"\\newline\\noindent{{\\bf Start at Environment State {result['start_state']+1}}} ")
+                    f.write(f"\\newline Run Fitness: {result['run_fitness']} ")
+                    traj_str = ""
+                    for (inp, out), first_time in result['pairs']:
+                        pair_str = f"({inp}, {out})"
+                        if first_time:
+                            pair_str = f"\\underline{{\\textcolor{{red}}{{{pair_str}}}}}"
+                        traj_str += pair_str + " "
+                    f.write("\\newline Trajectory: " + traj_str + "\n")
+                    out_str = ""
+                    for (inp, out), first_time in result['pairs']:
+                        out_str += str(out)
+                    f.write("\\newline Output: " + out_str + "\n")
+            else:
+                f.write("\n\\noindent{\\bf Trajectory (Input, Output) Pairs}\n")
+                traj_str = ""
+                seen_pairs = set()
+                for (inp, out), first_time in pairs:
+                    pair_str = f"({inp}, {out})"
+                    if first_time:
+                        pair_str = f"\\underline{{\\textcolor{{red}}{{{pair_str}}}}}"
+                    traj_str += pair_str + " "
+                f.write(traj_str + "\n")
+                out_str = ""
+                for (inp, out), first_time in pairs:
+                    out_str += str(out)
+                f.write("\n\\noindent Output: " + out_str + "\n")
 
             f.write("\\begin{figure}[h!]\n\\centering\n")
             f.write(f"\\includegraphics[width=0.45\\linewidth]{{{run_dot_pdf}}}\n")
@@ -730,15 +712,12 @@ def create_report(fitness_name, env_variant, timestamp, best_per_run, parsed_res
             f.write("\\end{figure}\n")
             f.write("\\FloatBarrier\n")
 
-# Suppress Printing Code for Full Automaton with Unreachable States
-#
-#            f.write("\n{\\bf GAP Transformations (All States)}\n")
-#            f.write(f"\\lstinputlisting{{{run_g_file}}}\n")
- 
+            # Suppress Printing Code for Full Automaton with Unreachable States
             f.write("\n{\\bf GAP Transformations (Reachable States)}\n")
             f.write(f"\\lstinputlisting{{{run_g_reach_file}}}\n")
 
         f.write("\\end{document}\n")
+
 
 
 # GAP REPORT -----------
@@ -757,7 +736,7 @@ def run_gap_and_collect(gap_script, timestamp):
     gap_output_file = f"gap_output_{timestamp}.txt"
     with open(gap_output_file, "w") as outfile:
 #        subprocess.run(f"gap-4.13.1/gap -b  < {gap_script}", stdout=outfile, shell=True)
-        subprocess.run(f"gap-4.13.1/gap -o 12g  < {gap_script}", stdout=outfile, shell=True)
+        subprocess.run(f"gap -o 12g  < {gap_script}", stdout=outfile, shell=True)
     print(f"GAP output collected in {gap_output_file}")
     return gap_output_file
 
