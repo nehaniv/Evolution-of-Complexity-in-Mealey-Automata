@@ -918,13 +918,13 @@ def plot_per_run_summary(results, timestamp):
 
     plt.plot(run_numbers, reachables, 'o-', color='blue', label='Reachable States')
     plt.plot(run_numbers, complexities, 's-', color='green', label='Complexity Upper Bound')
-#    plt.plot(run_numbers, chains, 'd-', color='red', label='Max Chain Length')
+    plt.plot(run_numbers, chains, 'd-', color='red', label='Max Chain Length')
     plt.plot(run_numbers, max_possible_complexities, 'x--', color='purple', label='Max Possible Complexity (Reachable - 1)')
 
     plt.xlabel('Run Number')
     plt.ylabel('Value')
-#    plt.title('Per-Run Summary: Reachable States, Complexity Upper Bound and Lower Bound,  Max Possible Complexity')
-    plt.title('Per-Run Summary: Reachable States, Complexity Upper Bound,  Max Possible Complexity')
+    plt.title('Per-Run Summary: Reachable States, Complexity Upper Bound and Lower Bound,  Max Possible Complexity')
+#    plt.title('Per-Run Summary: Reachable States, Complexity Upper Bound,  Max Possible Complexity')
 
     plt.legend(loc='upper left')
 
