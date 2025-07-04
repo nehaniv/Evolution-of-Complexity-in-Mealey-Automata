@@ -735,8 +735,8 @@ def generate_gap_runner(best_per_run, timestamp):
 def run_gap_and_collect(gap_script, timestamp):
     gap_output_file = f"gap_output_{timestamp}.txt"
     with open(gap_output_file, "w") as outfile:
-#        subprocess.run(f"../gap-4.13.1/gap -o 20g -b  < {gap_script}", stdout=outfile, shell=True)
-        subprocess.run(f"gap -o 20g  < {gap_script}", stdout=outfile, shell=True)
+         subprocess.run(f"../gap-4.13.1/gap -o 50g -b  < {gap_script}", stdout=outfile, shell=True)
+#        subprocess.run(f"gap -o 20g  < {gap_script}", stdout=outfile, shell=True)
     print(f"GAP output collected in {gap_output_file}")
     return gap_output_file
 
@@ -839,15 +839,15 @@ def plot_complexity_vs_reachability(results, timestamp):
 
     ax1.scatter(reachables, complexities, color='blue', label='Complexity Upper Bound')
 # Commented Out two next line to prevent display of Max Chain
-#    ax2.set_ylabel('Max Chain Length', color='red')
-#    ax2.scatter(reachables, chains, color='red', label='Max Chain Length')
+    ax2.set_ylabel('Max Chain Length', color='red')
+    ax2.scatter(reachables, chains, color='red', label='Max Chain Length')
 
     ax1.set_xlabel('Number of Reachable States')
     ax1.set_ylabel('Complexity Upper Bound', color='blue')
 
-#Comment out Chain Length from title
-#    fig.suptitle('Reachable States vs Complexity and Chain Length')
-    fig.suptitle('Reachable States vs Complexity')
+#Comment out Chain Length from title (comment out one of the next two lines)
+     fig.suptitle('Reachable States vs Complexity and Chain Length')
+#    fig.suptitle('Reachable States vs Complexity')
 
     # Create a combined legend
     handles1, labels1 = ax1.get_legend_handles_labels()
