@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ##########################################
-# Mealey Automata Evolution Strategy Runner
+# Mealy Automata Evolution Strategy Runner
 #
 # This script runs ES-Automata-Fogel.py with various modes:
 # - Default: Create a new population (random or self-looping)
@@ -10,24 +10,24 @@
 # - Resume: Resume from a checkpoint
 #
 # Usage:
-# ./MealeyEvolutionStrategy.sh [OPTIONS]
+# ./MealyEvolutionStrategy.sh [OPTIONS]
 #
 # Example:
-# ./MealeyEvolutionStrategy.sh --fitness Traversal --env_variant SimpleHardestEnvironment --init_automaton_file my_automaton.pkl
+# ./MealyEvolutionStrategy.sh --fitness Traversal --env_variant SimpleHardestEnvironment --init_automaton_file my_automaton.pkl
 #
 ##########################################
 
 # -------- Default Parameters --------
 POP_SIZE=5
 OFFSPRING_SIZE=50
-NUM_STATES=20
+NUM_STATES=15
 NUM_RUNS=10
-GENERATIONS=50000
-FITNESS="Traversal"  # Options: EightBall, FogelPalindrome, Traversal
-#FITNESS="FogelPalindrome"  # Options: EightBall, FogelPalindrome, Traversal
+GENERATIONS=1000
+FITNESS="MultiTraversal"  # Options: EightBall, FogelPalindrome, Traversal, Multitraversal
+#FITNESS="FogelPalindrome"  # Options: EightBall, FogelPalindrome, Traversal, Multitraversal
 #ENV_VARIANT="NA "
-ENV_VARIANT="SimpleHardestEnvironment"  # For Traversal fitness
-#ENV_VARIANT="SimpleEasiestEnvironment"  # For Traversal fitness
+ENV_VARIANT="SimpleHardestEnvironment"  # For Traversal and Multitraversal fitness
+#ENV_VARIANT="SimpleEasiestEnvironment"  # For Traversal and Multitraversal fitness
 SELF_LOOP_INIT="True"
 INIT_AUTOMATON_FILE=""
 INIT_POPULATION_FILE=""
@@ -36,7 +36,7 @@ HELP=""
 
 # -------- Help Function --------
 show_help() {
-    echo "Usage: ./MealeyEvolutionStrategy.sh [OPTIONS]"
+    echo "Usage: ./MealyEvolutionStrategy.sh [OPTIONS]"
     echo ""
     echo "Options:"
     echo "  --population_size N         Set the population size (default: 20)"
@@ -44,7 +44,7 @@ show_help() {
     echo "  --num_states N              Number of states per automaton (default: 50)"
     echo "  --runs N                    Number of runs (default: 10)"
     echo "  --generations N             Number of generations (default: 1000)"
-    echo "  --fitness NAME              Fitness function: EightBall, FogelPalindrome, Traversal"
+    echo "  --fitness NAME              Fitness function: EightBall, FogelPalindrome, Traversal, MultiTraversal"
     echo "  --env_variant NAME          Traversal variant: SimpleHardestEnvironment or SimpleEasiestEnvironment"
     echo "  --self_loop_init True/False Initialize automata with self-looping transitions (default: True)"
     echo "  --init_automaton_file PATH  Load automaton from pickle file to initialize population"

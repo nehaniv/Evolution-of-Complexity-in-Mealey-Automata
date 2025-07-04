@@ -1,4 +1,4 @@
-# Evolution-of-Complexity-in-Mealey-Automata
+# Evolution-of-Complexity-in-Mealy-Automata
 
 ## Mealey Automata Evolution Framework
 

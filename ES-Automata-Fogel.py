@@ -15,7 +15,7 @@ DEFAULT_INPUT_ALPHABET = ['0', '1']
 DEFAULT_OUTPUT_ALPHABET = ['0', '1']
 
 # ----------------- Automaton Class -----------------
-class MealeyAutomaton:
+class MealyAutomaton:
     def __init__(self, num_states, input_alphabet, output_alphabet, self_loop_init=False ):
         self.num_states = num_states
         self.input_alphabet = input_alphabet
@@ -216,19 +216,19 @@ def fogel_palindrome_fitness(automaton, target):
 def traversal_fitness(automaton, env_dfa):
     visited = set()
     env_state = env_dfa.initial_state
-    mealey_state = automaton.initial_state
+    mealy_state = automaton.initial_state
     pairs = []
     seen_pairs = set()
     for _ in range(100):
         env_input = str(env_state + 1)
         if env_input not in automaton.input_alphabet:
             continue
-        mealey_output = automaton.outputs.get((mealey_state, env_input))
-        mealey_state = automaton.transitions.get((mealey_state, env_input), mealey_state)
-        if mealey_output in env_dfa.input_alphabet:
-            visited.add((env_state, mealey_output))
-            env_state = env_dfa.transitions.get((env_state, mealey_output), env_state)
-        pair = (env_input, mealey_output)
+        mealy_output = automaton.outputs.get((mealy_state, env_input))
+        mealy_state = automaton.transitions.get((mealy_state, env_input), mealy_state)
+        if mealy_output in env_dfa.input_alphabet:
+            visited.add((env_state, mealy_output))
+            env_state = env_dfa.transitions.get((env_state, mealy_output), env_state)
+        pair = (env_input, mealy_output)
         first_time = pair not in seen_pairs
         if first_time:
             seen_pairs.add(pair)
@@ -245,19 +245,19 @@ def multitraversal_fitness(automaton, env_dfa):
     for start in range(env_dfa.num_states):
         visited = set()
         env_state = start
-        mealey_state = automaton.initial_state
+        mealy_state = automaton.initial_state
         pairs = []
         seen_pairs = set()
         for _ in range(100):
             env_input = str(env_state + 1)
             if env_input not in automaton.input_alphabet:
                 continue
-            mealey_output = automaton.outputs.get((mealey_state, env_input))
-            mealey_state = automaton.transitions.get((mealey_state, env_input), mealey_state)
-            if mealey_output in env_dfa.input_alphabet:
-                visited.add((env_state, mealey_output))
-                env_state = env_dfa.transitions.get((env_state, mealey_output), env_state)
-            pair = (env_input, mealey_output)
+            mealy_output = automaton.outputs.get((mealy_state, env_input))
+            mealy_state = automaton.transitions.get((mealy_state, env_input), mealy_state)
+            if mealy_output in env_dfa.input_alphabet:
+                visited.add((env_state, mealy_output))
+                env_state = env_dfa.transitions.get((env_state, mealy_output), env_state)
+            pair = (env_input, mealy_output)
             first_time = pair not in seen_pairs
             if first_time:
                 seen_pairs.add(pair)
@@ -480,7 +480,7 @@ def create_prelim_report(fitness_name, env_variant, timestamp, best_per_run, par
         f.write("\\usepackage{geometry}\n")
         f.write("\\usepackage{listings}\n")
         f.write("\\geometry{margin=1in}\n\\begin{document}\n")
-        f.write(f"\\title{{Evolution Strategy for Mealey Automata -- Fitness {fitness_name}")
+        f.write(f"\\title{{Evolution Strategy for Mealy Automata -- Fitness {fitness_name}")
         if fitness_name in ["Traversal", "MultiTraversal"]:
             f.write(f" (Environment DFA: {env_variant})")
         f.write("}\n\\maketitle\n")
@@ -587,7 +587,7 @@ def create_report(fitness_name, env_variant, timestamp, best_per_run, parsed_res
         f.write("\\usepackage{geometry}\n")
         f.write("\\usepackage{listings}\n")
         f.write("\\geometry{margin=1in}\n\\begin{document}\n")
-        f.write(f"\\title{{Evolution Strategy for Mealey Automata -- Fitness {fitness_name}")
+        f.write(f"\\title{{Evolution Strategy for Mealy Automata -- Fitness {fitness_name}")
         if fitness_name in ["Traversal", "MultiTraversal"]:
             f.write(f" (Environment DFA: {env_variant})")
         f.write("}\n\\maketitle\n")
@@ -1064,7 +1064,7 @@ if __name__ == "__main__":
     import pickle  # make sure pickle is imported
 
     # Argparse setup 
-    parser = argparse.ArgumentParser(description="Mealey Automaton Evolution Strategy")
+    parser = argparse.ArgumentParser(description="Mealy Automaton Evolution Strategy")
     parser.add_argument('--population_size', type=int, default=50)
     parser.add_argument('--offspring_size', type=int, default=100)
     parser.add_argument('--num_states', type=int, default=10)
@@ -1139,7 +1139,7 @@ if __name__ == "__main__":
         else:
             print(f"Initializing population with self_loop_init={args.self_loop_init}...")
             population = [
-                MealeyAutomaton(
+                MealyAutomaton(
                     args.num_states,
                     input_alphabet,
                     output_alphabet,
