@@ -846,7 +846,7 @@ def plot_complexity_vs_reachability(results, timestamp):
     ax1.set_ylabel('Complexity Upper Bound', color='blue')
 
 #Comment out Chain Length from title (comment out one of the next two lines)
-     fig.suptitle('Reachable States vs Complexity and Chain Length')
+    fig.suptitle('Reachable States vs Complexity and Chain Length')
 #    fig.suptitle('Reachable States vs Complexity')
 
     # Create a combined legend
