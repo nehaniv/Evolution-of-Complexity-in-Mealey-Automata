@@ -736,7 +736,7 @@ def run_gap_and_collect(gap_script, timestamp):
     gap_output_file = f"gap_output_{timestamp}.txt"
     with open(gap_output_file, "w") as outfile:
 #         subprocess.run(f"../gap-4.13.1/gap -o 50g -b  < {gap_script}", stdout=outfile, shell=True)
-        subprocess.run(f"gap -o 20g  < {gap_script}", stdout=outfile, shell=True)
+        subprocess.run(f"gap -o 50g  < {gap_script}", stdout=outfile, shell=True)
     print(f"GAP output collected in {gap_output_file}")
     return gap_output_file
 
