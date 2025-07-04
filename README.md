@@ -1,6 +1,6 @@
 # Evolution-of-Complexity-in-Mealy-Automata
 
-## Mealey Automata Evolution Framework
+## Mealy Automata Evolution Framework
 
 This project implements an **evolutionary strategy (ES)** for evolving **Mealy automata** to solve predictive tasks such as:
 - Traversal of deterministic environments (e.g., "SimpleHardestEnvironment")
@@ -15,7 +15,7 @@ All logic and functionality are contained in a single Python file:
 - `ES-Automata-Fogel.py`
 
 A bash script is provided for running the system with customizable parameters:
-- `MealeyEvolutionStrategy.sh`
+- `MealyEvolutionStrategy.sh`
 
 ##  Python Environment Setup
 
@@ -50,10 +50,10 @@ conda activate automata-env
 
 
 ##  Running the Evolution and Complexity Analysis
-bash MealeyEvolutionStrategy.sh
+bash MealyEvolutionStrategy.sh
 
 
-You can modify MealeyEvolutionStrategy.sh to adjust:
+You can modify MealyEvolutionStrategy.sh to adjust:
 
 Population size, Number of states, Number of offspring, Number of generations, Number of runs, Fitness function (and possibly Environment variant), Initialization method (e.g. self-looped, random, from file)
 
