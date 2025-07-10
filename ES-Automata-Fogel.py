@@ -722,23 +722,23 @@ def create_report(fitness_name, env_variant, timestamp, best_per_run, parsed_res
 
 # GAP REPORT -----------
 
-def generate_gap_runner(best_per_run, timestamp):
-    gap_script = f"gap_runner_{timestamp}.g"
-    with open(gap_script, "w") as f:
-        for i in range(len(best_per_run)):
-            run_id = i + 1
-            g_file = f"best_automaton_run_{run_id}_{timestamp}_reachable.g"
-            f.write(f'Read("{g_file}");\n')
-    print(f"GAP runner script written to {gap_script}")
-    return gap_script
+# def generate_gap_runner(best_per_run, timestamp):
+#     gap_script = f"gap_runner_{timestamp}.g"
+#     with open(gap_script, "w") as f:
+#         for i in range(len(best_per_run)):
+#             run_id = i + 1
+#             g_file = f"best_automaton_run_{run_id}_{timestamp}_reachable.g"
+#             f.write(f'Read("{g_file}");\n')
+#     print(f"GAP runner script written to {gap_script}")
+#     return gap_script
 
-def run_gap_and_collect(gap_script, timestamp):
-    gap_output_file = f"gap_output_{timestamp}.txt"
-    with open(gap_output_file, "w") as outfile:
-#        subprocess.run(f"gap-4.13.1/gap -b  < {gap_script}", stdout=outfile, shell=True)
-        subprocess.run(f"gap -o 12g  < {gap_script}", stdout=outfile, shell=True)
-    print(f"GAP output collected in {gap_output_file}")
-    return gap_output_file
+# def run_gap_and_collect(gap_script, timestamp):
+#     gap_output_file = f"gap_output_{timestamp}.txt"
+#     with open(gap_output_file, "w") as outfile:
+# #         subprocess.run(f"../gap-4.13.1/gap -o 50g -b  < {gap_script}", stdout=outfile, shell=True)
+#         subprocess.run(f"gap -o 50g  < {gap_script}", stdout=outfile, shell=True)
+#     print(f"GAP output collected in {gap_output_file}")
+#     return gap_output_file
 
 def clean_gap_output(gap_output_file):
     cleaned_file = gap_output_file.replace('.txt', '_cleaned.txt')
@@ -1159,6 +1159,13 @@ if __name__ == "__main__":
         args.stamp
     )
 
+    # ----------------- Generate Manifest for GAP Parallel Run -----------------
+    with open(f'gap_manifest_{args.stamp}.txt', 'w') as f:
+        for i in range(len(best_per_run)):
+            run_id = i + 1
+            g_file = f"best_automaton_run_{run_id}_{args.stamp}_reachable.g"
+            f.write(f"{g_file}\n")
+
 
     # ----------------- Checkpoint Save -----------------
     if args.save_checkpoint:
@@ -1205,14 +1212,14 @@ if __name__ == "__main__":
     print(f"Preliminary report created as evolution_prelim_report_{args.stamp}.pdf")
 
     # GAP integration
-    gap_script = generate_gap_runner(best_per_run, args.stamp)
-    gap_output_file = run_gap_and_collect(gap_script, args.stamp)
-    cleaned_gap_file = clean_gap_output(gap_output_file)
-    create_gap_report(cleaned_gap_file, args.stamp, args.fitness, args.env_variant, params)
+    # gap_script = generate_gap_runner(best_per_run, args.stamp)
+    # gap_output_file = run_gap_and_collect(gap_script, args.stamp)
+    gap_output_file = f"gap_output_{args.stamp}.txt"
+    create_gap_report(gap_output_file, args.stamp, args.fitness, args.env_variant, params)
 
     # List: also create the excel file and evolution report
-    create_summary_excel(best_per_run, parse_gap_output(cleaned_gap_file), args.stamp)
-    parsed_results = parse_gap_output(cleaned_gap_file)
+    create_summary_excel(best_per_run, parse_gap_output(gap_output_file), args.stamp)
+    parsed_results = parse_gap_output(gap_output_file)
     create_report(args.fitness, args.env_variant, args.stamp, best_per_run, parsed_results, params)
 
 

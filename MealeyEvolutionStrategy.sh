@@ -128,6 +128,14 @@ fi
 echo "Running: $PYTHON_CMD"
 eval $PYTHON_CMD
 
+# -------- Parallel GAP Run --------
+if [ -f "gap_manifest_${STAMP}.txt" ]; then
+  echo "Running GAP in parallel..."
+  ./run_gap_parallel.sh gap_manifest_${STAMP}.txt $STAMP 8  # 8 = number of parallel jobs, adjust as needed
+else
+  echo "No manifest found for GAP parallel run."
+fi
+
 # -------- Compile LaTeX Reports --------
 for REPORT in evolution_prelim_report_${STAMP}.tex evolution_report_${STAMP}.tex gap_analysis_report_${STAMP}.tex; do
   if [ -f "$REPORT" ]; then
