@@ -21,9 +21,9 @@
 POP_SIZE=5
 OFFSPRING_SIZE=50
 NUM_STATES=20
-NUM_RUNS=10
-GENERATIONS=50000
-FITNESS="Traversal"  # Options: EightBall, FogelPalindrome, Traversal
+NUM_RUNS=2
+GENERATIONS=100
+FITNESS="MultiTraversal"  # Options: EightBall, FogelPalindrome, Traversal
 #FITNESS="FogelPalindrome"  # Options: EightBall, FogelPalindrome, Traversal
 #ENV_VARIANT="NA "
 ENV_VARIANT="SimpleHardestEnvironment"  # For Traversal fitness
@@ -100,7 +100,7 @@ fi
 echo "=========================================="
 
 # -------- Build Python Command --------
-PYTHON_CMD="python3 ES-Automata-Fogel.py \
+PYTHON_CMD="python3 ES-Automata_Fogel-pre.py \
   --population_size $POP_SIZE \
   --offspring_size $OFFSPRING_SIZE \
   --num_states $NUM_STATES \
@@ -124,7 +124,7 @@ if [ -n "$CHECKPOINT_FILE" ]; then
     PYTHON_CMD+=" --checkpoint_file $CHECKPOINT_FILE"
 fi
 
-# -------- Run Python Script --------
+# -------- Run Python Pre-GAP Script --------
 echo "Running: $PYTHON_CMD"
 eval $PYTHON_CMD
 
@@ -134,7 +134,16 @@ if [ -f "gap_manifest_${STAMP}.txt" ]; then
   ./run_gap_parallel.sh gap_manifest_${STAMP}.txt $STAMP 8  # 8 = number of parallel jobs, adjust as needed
 else
   echo "No manifest found for GAP parallel run."
+  exit 1
 fi
+
+# -------- Run Python Post-GAP Script --------
+PYTHON_POST_CMD="python3 ES-Automata-Fogel-post.py \
+  --stamp $STAMP \
+  --fitness $FITNESS \
+  --env_variant $ENV_VARIANT"
+echo "Running: $PYTHON_POST_CMD"
+eval $PYTHON_POST_CMD
 
 # -------- Compile LaTeX Reports --------
 for REPORT in evolution_prelim_report_${STAMP}.tex evolution_report_${STAMP}.tex gap_analysis_report_${STAMP}.tex; do
