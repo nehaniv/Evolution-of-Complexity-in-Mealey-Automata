@@ -21,13 +21,14 @@
 POP_SIZE=5
 OFFSPRING_SIZE=50
 NUM_STATES=15
-NUM_RUNS=10
-GENERATIONS=1000
+NUM_RUNS=2
+GENERATIONS=10
 FITNESS="MultiTraversal"  # Options: EightBall, FogelPalindrome, Traversal, Multitraversal
 #FITNESS="FogelPalindrome"  # Options: EightBall, FogelPalindrome, Traversal, Multitraversal
 #ENV_VARIANT="NA "
 ENV_VARIANT="SimpleHardestEnvironment"  # For Traversal and Multitraversal fitness
 #ENV_VARIANT="SimpleEasiestEnvironment"  # For Traversal and Multitraversal fitness
+EXECUTION="Sequential" 
 SELF_LOOP_INIT="True"
 INIT_AUTOMATON_FILE=""
 INIT_POPULATION_FILE=""
@@ -46,6 +47,7 @@ show_help() {
     echo "  --generations N             Number of generations (default: 1000)"
     echo "  --fitness NAME              Fitness function: EightBall, FogelPalindrome, Traversal, MultiTraversal"
     echo "  --env_variant NAME          Traversal variant: SimpleHardestEnvironment or SimpleEasiestEnvironment"
+    echo "  --execution N               Set the execution style: Parallel or Sequential"
     echo "  --self_loop_init True/False Initialize automata with self-looping transitions (default: True)"
     echo "  --init_automaton_file PATH  Load automaton from pickle file to initialize population"
     echo "  --init_population_file PATH Load population from pickle file"
@@ -64,6 +66,7 @@ while [[ "$#" -gt 0 ]]; do
         --generations) GENERATIONS="$2"; shift ;;
         --fitness) FITNESS="$2"; shift ;;
         --env_variant) ENV_VARIANT="$2"; shift ;;
+        --execution) EXECUTION="$2"; shift ;;
         --self_loop_init) SELF_LOOP_INIT="$2"; shift ;;
         --init_automaton_file) INIT_AUTOMATON_FILE="$2"; shift ;;
         --init_population_file) INIT_POPULATION_FILE="$2"; shift ;;
@@ -87,6 +90,7 @@ echo " Runs               : $NUM_RUNS"
 echo " Generations        : $GENERATIONS"
 echo " Fitness            : $FITNESS"
 echo " Env Variant        : $ENV_VARIANT"
+echo " Execution          : $EXECUTION"
 echo " Self Loop Init     : $SELF_LOOP_INIT"
 if [ -n "$INIT_AUTOMATON_FILE" ]; then
     echo " Init Automaton     : $INIT_AUTOMATON_FILE"
@@ -109,7 +113,8 @@ PYTHON_CMD="python3 ES-Automata-Fogel.py \
   --fitness $FITNESS \
   --env_variant $ENV_VARIANT \
   --self_loop_init $SELF_LOOP_INIT \
-  --stamp $STAMP"
+  --stamp $STAMP \
+  --execution $EXECUTION"
 
 # Add optional files
 if [ -n "$INIT_AUTOMATON_FILE" ]; then

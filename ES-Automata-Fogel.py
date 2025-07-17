@@ -9,6 +9,8 @@ import graphviz
 import numpy as np
 import re
 import pandas as pd
+import multiprocessing as mp
+import os 
 
 # ----------------- Configuration -----------------
 DEFAULT_INPUT_ALPHABET = ['0', '1']
@@ -742,10 +744,39 @@ def run_gap_and_collect(gap_script, timestamp):
 
 def clean_gap_output(gap_output_file):
     cleaned_file = gap_output_file.replace('.txt', '_cleaned.txt')
-    sed_command = f"sed -r 's/\\x1b\\[[0-9;]*[mK]//g' {gap_output_file} > {cleaned_file}"
-    subprocess.run(sed_command, shell=True)
+    if args.execution == "Sequential":
+        sed_command = f"sed -r 's/\\x1b\\[[0-9;]*[mK]//g' {gap_output_file} > {cleaned_file}"
+        subprocess.run(sed_command, shell=True)
+    else:
+        with open(gap_output_file, 'r') as infile:
+            content = infile.read()
+
+        # Remove lines that are just '>' or a series of '>' (possibly separated by spaces)
+        content = re.sub(r'^([ >]+)$', '', content, flags=re.MULTILINE)
+        # Remove any inline "> > > ..." fragments (e.g., at the start of a line)
+        content = re.sub(r'(^|\n)[ >]+', '\n', content)
+        # Remove multiple blank lines
+        content = re.sub(r'\n\s*\n+', '\n', content)
+        # Strip leading/trailing whitespace
+        content = content.strip()
+
+        with open(cleaned_file, 'w') as outfile:
+            outfile.write(content)
     print(f"Cleaned GAP output saved to {cleaned_file}")
     return cleaned_file
+
+def run_single_gap(gap_script, timestamp, run_id):
+    output_file = f"gap_output_run_{run_id}_{timestamp}.txt"
+    with open(output_file, "w") as outfile:
+        result = subprocess.run(
+            f"gap -o 50g < {gap_script}",
+            stdout=outfile,
+            stderr=subprocess.PIPE,
+            shell=True
+        )
+
+    print(f"GAP output for run {run_id} collected in {output_file}")
+    return output_file
 
 #def clean_gap_output(gap_output_file):
 #    cleaned_file = gap_output_file.replace('.txt', '_cleaned.txt')
@@ -761,12 +792,19 @@ def parse_gap_output(cleaned_gap_file):
     with open(cleaned_gap_file, 'r') as f:
         content = f.read()
 
-    # Split the output into blocks per automaton (based on "gap>" prompt)
-    blocks = content.strip().split("gap>")[1:]  # skip first preamble
+    # Split the output into blocks per automaton (based on "gap>" / "<skeleton"  prompt)
+    if args.execution == 'Sequential':
+        blocks = content.strip().split("gap>")[1:]  # skip first preamble
+    else:
+        blocks = content.strip().split("<skeleton")[1:]  # skip first preamble
+
 
     for block in blocks:
         # Clean block (handle GAP \ continuations)
         block_cleaned = re.sub(r'\\\s*\n', '', block)
+
+        if args.execution == "Parallel":
+            block_cleaned = re.sub(r'\s*gap>\s*', '\n', block_cleaned)
 
         # Look for the key markers
         reachable_match = re.search(r'number of reachable states:\s*(\d+)', block_cleaned)
@@ -796,11 +834,19 @@ def parse_gap_output(cleaned_gap_file):
 
 
             #  Only parse chain text if it's inside a valid block
-            chain_match = re.search(
-                r'Max Chain of Essential Dependencies: Maximum Chain Found:(.*?)(?:\n\n|\Z)',
-                block_cleaned,
-                re.DOTALL
-            )
+
+            if args.execution == "Parallel":
+                chain_match = re.search(
+                    r'Maximum Chain Found:(.*?)(?:\n\n|\Z)',
+                    block_cleaned,
+                    re.DOTALL
+                )
+            else:
+                chain_match = re.search(
+                    r'Max Chain of Essential Dependencies: Maximum Chain Found:(.*?)(?:\n\n|\Z)',
+                    block_cleaned,
+                    re.DOTALL
+                )
 
             if chain_match:
                 chain_text = chain_match.group(1).replace('\n', ' ').strip()
@@ -907,6 +953,12 @@ def plot_per_run_summary(results, timestamp):
 
     plt.legend(loc='upper left')
 
+    print("reachables:", reachables)
+    print("complexities:", complexities)
+    print("chains:", chains)
+    print("all:", reachables + complexities + chains)
+    print("types:", [type(x) for x in (reachables + complexities + chains)])
+
     # Force Y-axis to start at 0
     max_y = max(reachables + complexities + chains )
     plt.ylim(0, max_y + 1)
@@ -938,9 +990,6 @@ def plot_per_run_summary_OLD(results, timestamp):
     plt.savefig(f'gap_per_run_summary_{timestamp}.pdf')
     plt.close()
     print(f"Per-run summary plot saved as gap_per_run_summary_{timestamp}.pdf")
-
-
-
 
 
 def create_gap_report(gap_output_file, timestamp, fitness_name, env_variant, params):
@@ -1075,6 +1124,7 @@ if __name__ == "__main__":
     parser.add_argument("--env_variant", type=str, default="SimpleHardestEnvironment", help="Variant of EnvironmentDFA for Traversal/MultiTraversal fitness")
     parser.add_argument('--self_loop_init', type=str2bool, default=False, help="Initialize automata with self-looping transitions")
     parser.add_argument('--stamp', type=str, default=datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
+    parser.add_argument('--execution', type=str, choices=["Sequential", "Parallel"], default="Sequential")
 
     # New arguments for advanced initialization & checkpointing
     parser.add_argument('--init_automaton_file', type=str, default=None,
@@ -1175,6 +1225,7 @@ if __name__ == "__main__":
                 'generations': args.generations,
                 'fitness_name': args.fitness,
                 'env_variant': args.env_variant,
+                'execution-mode': args.execution,
             }
         }
         with open(f'checkpoint_{args.stamp}.pkl', 'wb') as f:
@@ -1204,9 +1255,25 @@ if __name__ == "__main__":
     create_prelim_report(args.fitness, args.env_variant, args.stamp, best_per_run, params) #WITHOUT PARSED RESULTS, WITHOUT COMPLEXITY BOUNDS PLOT
     print(f"Preliminary report created as evolution_prelim_report_{args.stamp}.pdf")
 
-    # GAP integration
-    gap_script = generate_gap_runner(best_per_run, args.stamp)
-    gap_output_file = run_gap_and_collect(gap_script, args.stamp)
+     # GAP integration
+    if args.execution == 'Sequential':
+        gap_script = generate_gap_runner(best_per_run, args.stamp)
+        gap_output_file = run_gap_and_collect(gap_script, args.stamp)
+    else:
+        # --- Parallel GAP integration ---
+        g_files = [f"best_automaton_run_{i+1}_{args.stamp}_reachable.g" for i in range(len(best_per_run))]
+        run_ids = list(range(1, len(best_per_run) + 1))
+
+        ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=1))
+        pool = mp.Pool(processes=ncpus)
+        output_files = pool.starmap(run_single_gap, [(g, args.stamp, rid) for g, rid in zip(g_files, run_ids)])
+
+        gap_output_file = f"gap_output_{args.stamp}.txt"
+        with open(gap_output_file, "w") as outfile:
+            for fname in output_files:
+                with open(fname) as infile:
+                    outfile.write(infile.read())
+
     cleaned_gap_file = clean_gap_output(gap_output_file)
     create_gap_report(cleaned_gap_file, args.stamp, args.fitness, args.env_variant, params)
 
