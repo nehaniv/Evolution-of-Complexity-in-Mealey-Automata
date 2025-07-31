@@ -775,7 +775,6 @@ def run_single_gap(gap_script, timestamp, run_id):
             shell=True
         )
 
-    print(f"GAP output for run {run_id} collected in {output_file}")
     return output_file
 
 #def clean_gap_output(gap_output_file):
@@ -952,12 +951,6 @@ def plot_per_run_summary(results, timestamp):
 #    plt.title('Per-Run Summary: Reachable States, Complexity Upper Bound,  Max Possible Complexity')
 
     plt.legend(loc='upper left')
-
-    print("reachables:", reachables)
-    print("complexities:", complexities)
-    print("chains:", chains)
-    print("all:", reachables + complexities + chains)
-    print("types:", [type(x) for x in (reachables + complexities + chains)])
 
     # Force Y-axis to start at 0
     max_y = max(reachables + complexities + chains )
@@ -1264,7 +1257,7 @@ if __name__ == "__main__":
         g_files = [f"best_automaton_run_{i+1}_{args.stamp}_reachable.g" for i in range(len(best_per_run))]
         run_ids = list(range(1, len(best_per_run) + 1))
 
-        ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=1))
+        ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK', default=mp.cpu_count()))
         pool = mp.Pool(processes=ncpus)
         output_files = pool.starmap(run_single_gap, [(g, args.stamp, rid) for g, rid in zip(g_files, run_ids)])
 
